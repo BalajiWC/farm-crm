@@ -1,797 +1,720 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FarmCRM — Smart Farm Management</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
+import { useState } from "react";
 
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo">
-    <span class="logo-icon">🌾</span>
-    <span class="logo-text">FarmCRM</span>
+// ── Palette & helpers ────────────────────────────────────────────────────────
+const C = {
+  bg: "#F7F6F2",
+  card: "#FFFFFF",
+  primary: "#2D5016",
+  primaryLight: "#4A7C28",
+  accent: "#8BC34A",
+  accentSoft: "#EBF5D6",
+  text: "#1A1A1A",
+  muted: "#6B7280",
+  border: "#E5E7EB",
+  warn: "#F59E0B",
+  warnSoft: "#FEF3C7",
+  danger: "#EF4444",
+  dangerSoft: "#FEE2E2",
+  info: "#3B82F6",
+  infoSoft: "#EFF6FF",
+  success: "#10B981",
+  successSoft: "#D1FAE5",
+};
+
+const zones = ["Zone A","Zone B","Zone C","Zone D","Zone E","Zone F","Zone G","Zone H"];
+const fields = {
+  "Zone A":["Field A1","Field A2","Field A3"],
+  "Zone B":["Field B1","Field B2"],
+  "Zone C":["Field C1","Field C2","Field C3","Field C4"],
+  "Zone D":["Field D1","Field D2"],
+  "Zone E":["Field E1","Field E2","Field E3"],
+  "Zone F":["Field F1","Field F2"],
+  "Zone G":["Field G1","Field G2","Field G3"],
+  "Zone H":["Field H1","Field H2"],
+};
+
+const employees = [
+  { id:1, name:"Rajan Kumar",    zone:"Zone A", role:"Field Supervisor", avatar:"RK", hours:42, tasks:8,  done:6,  status:"active" },
+  { id:2, name:"Meena Devi",     zone:"Zone B", role:"Field Worker",     avatar:"MD", hours:38, tasks:5,  done:5,  status:"active" },
+  { id:3, name:"Arjun Patel",    zone:"Zone C", role:"Field Worker",     avatar:"AP", hours:40, tasks:7,  done:4,  status:"active" },
+  { id:4, name:"Sita Ram",       zone:"Zone D", role:"Zone Manager",     avatar:"SR", hours:45, tasks:10, done:8,  status:"active" },
+  { id:5, name:"Kavya Reddy",    zone:"Zone E", role:"Field Worker",     avatar:"KR", hours:35, tasks:6,  done:3,  status:"leave"  },
+  { id:6, name:"Mohan Singh",    zone:"Zone F", role:"Field Supervisor", avatar:"MS", hours:41, tasks:9,  done:7,  status:"active" },
+  { id:7, name:"Priya Nair",     zone:"Zone G", role:"Field Worker",     avatar:"PN", hours:39, tasks:5,  done:5,  status:"active" },
+  { id:8, name:"Suresh Babu",    zone:"Zone H", role:"Zone Manager",     avatar:"SB", hours:44, tasks:11, done:9,  status:"active" },
+];
+
+const initialTasks = [
+  { id:1, title:"Irrigate North Fields",    zone:"Zone A", field:"Field A1", assignedTo:"Rajan Kumar",  priority:"high",   status:"completed", due:"2025-04-25", hours:4 },
+  { id:2, title:"Apply fertilizer",         zone:"Zone B", field:"Field B1", assignedTo:"Meena Devi",   priority:"medium", status:"completed", due:"2025-04-25", hours:3 },
+  { id:3, title:"Pest control spray",       zone:"Zone C", field:"Field C2", assignedTo:"Arjun Patel",  priority:"high",   status:"in-progress",due:"2025-04-26", hours:5 },
+  { id:4, title:"Harvest sugarcane row 3",  zone:"Zone D", field:"Field D1", assignedTo:"Sita Ram",     priority:"high",   status:"completed", due:"2025-04-25", hours:8 },
+  { id:5, title:"Soil testing",             zone:"Zone E", field:"Field E1", assignedTo:"Kavya Reddy",  priority:"low",    status:"pending",   due:"2025-04-28", hours:2 },
+  { id:6, title:"Repair irrigation pipes",  zone:"Zone F", field:"Field F2", assignedTo:"Mohan Singh",  priority:"medium", status:"in-progress",due:"2025-04-26", hours:3 },
+  { id:7, title:"Weed removal",             zone:"Zone G", field:"Field G1", assignedTo:"Priya Nair",   priority:"low",    status:"completed", due:"2025-04-24", hours:4 },
+  { id:8, title:"Load banana to truck",     zone:"Zone H", field:"Field H1", assignedTo:"Suresh Babu",  priority:"high",   status:"completed", due:"2025-04-25", hours:6 },
+  { id:9, title:"Check crop health",        zone:"Zone A", field:"Field A2", assignedTo:"Rajan Kumar",  priority:"medium", status:"pending",   due:"2025-04-27", hours:2 },
+  { id:10,title:"Planting seeds row 4",    zone:"Zone C", field:"Field C3", assignedTo:"Arjun Patel",  priority:"medium", status:"pending",   due:"2025-04-27", hours:5 },
+];
+
+const expenses = [
+  { id:1, date:"2025-04-25", category:"Fertilizer", description:"Urea 50kg bags x10", amount:4500, zone:"Zone A", by:"Admin" },
+  { id:2, date:"2025-04-25", category:"Labour",     description:"Daily wages 6 workers",amount:3600, zone:"Zone B", by:"Admin" },
+  { id:3, date:"2025-04-24", category:"Pesticide",  description:"Fungicide spray cans", amount:2200, zone:"Zone C", by:"Admin" },
+  { id:4, date:"2025-04-24", category:"Fuel",       description:"Tractor diesel 40L",   amount:3200, zone:"Zone D", by:"Admin" },
+  { id:5, date:"2025-04-23", category:"Equipment",  description:"Irrigation pipe repair",amount:1800, zone:"Zone F", by:"Admin" },
+  { id:6, date:"2025-04-23", category:"Seeds",      description:"Paddy seeds 20kg",      amount:2600, zone:"Zone G", by:"Admin" },
+];
+
+const loadings = [
+  { id:1, date:"2025-04-25", crop:"Banana",    qty:"2.4 ton", zone:"Zone H", driver:"Suresh Babu",  vehicle:"TN-01-AB-1234", destination:"Chennai Market",  status:"delivered" },
+  { id:2, date:"2025-04-25", crop:"Sugarcane", qty:"5.0 ton", zone:"Zone D", driver:"Sita Ram",     vehicle:"TN-01-CD-5678", destination:"Sugar Mill",      status:"in-transit" },
+  { id:3, date:"2025-04-24", crop:"Paddy",     qty:"1.8 ton", zone:"Zone G", driver:"Priya Nair",   vehicle:"TN-01-EF-9012", destination:"Govt Depot",      status:"delivered" },
+  { id:4, date:"2025-04-23", crop:"Coconut",   qty:"800 nuts",zone:"Zone B", driver:"Meena Devi",   vehicle:"TN-01-GH-3456", destination:"Local Market",    status:"delivered" },
+];
+
+const vendors = [
+  { id:1, name:"AgroTech Supplies",  category:"Fertilizer & Seeds", contact:"9876543210", location:"Coimbatore",  lastOrder:"2025-04-25", balance:12000, status:"active" },
+  { id:2, name:"FarmFuel Co.",       category:"Fuel & Lubricants",  contact:"9876543211", location:"Erode",       lastOrder:"2025-04-24", balance:0,     status:"active" },
+  { id:3, name:"PestShield India",   category:"Pesticides",         contact:"9876543212", location:"Tiruppur",    lastOrder:"2025-04-23", balance:5500,  status:"active" },
+  { id:4, name:"KisanEquip Pvt Ltd", category:"Equipment & Tools",  contact:"9876543213", location:"Salem",       lastOrder:"2025-04-20", balance:8200,  status:"active" },
+  { id:5, name:"GreenGrow Seeds",    category:"Seeds",              contact:"9876543214", location:"Madurai",     lastOrder:"2025-04-18", balance:3100,  status:"inactive"},
+];
+
+const attendance = employees.map((e,i) => ({
+  id: e.id, name: e.name, zone: e.zone,
+  today: e.status === "leave" ? "absent" : "present",
+  inTime: e.status === "leave" ? "--" : `0${6+i%3}:${i%2===0?"00":"30"} AM`,
+  outTime: e.status === "leave" ? "--" : "05:30 PM",
+  hours: e.status === "leave" ? 0 : e.hours / 5,
+  week: [1,1,1,1,e.status==="leave"?0:1,1,0],
+}));
+
+// ── Small components ─────────────────────────────────────────────────────────
+const Badge = ({ children, color }) => {
+  const map = {
+    high:       { bg: C.dangerSoft,  text: C.danger  },
+    medium:     { bg: C.warnSoft,    text: C.warn    },
+    low:        { bg: C.infoSoft,    text: C.info    },
+    completed:  { bg: C.successSoft, text: C.success },
+    "in-progress":{ bg: C.warnSoft,  text: C.warn    },
+    pending:    { bg: C.infoSoft,    text: C.info    },
+    active:     { bg: C.successSoft, text: C.success },
+    leave:      { bg: C.warnSoft,    text: C.warn    },
+    delivered:  { bg: C.successSoft, text: C.success },
+    "in-transit":{ bg: C.warnSoft,   text: C.warn    },
+    inactive:   { bg: "#F3F4F6",     text: C.muted   },
+    present:    { bg: C.successSoft, text: C.success },
+    absent:     { bg: C.dangerSoft,  text: C.danger  },
+  };
+  const s = map[color || children?.toLowerCase()] || { bg:"#F3F4F6", text: C.muted };
+  return (
+    <span style={{ background: s.bg, color: s.text, fontSize:11, fontWeight:600,
+      padding:"3px 10px", borderRadius:20, textTransform:"capitalize", letterSpacing:.3 }}>
+      {children}
+    </span>
+  );
+};
+
+const Avatar = ({ initials, size=36 }) => (
+  <div style={{ width:size, height:size, borderRadius:"50%", background:C.accentSoft,
+    color: C.primary, fontWeight:700, fontSize:size*0.35, display:"flex",
+    alignItems:"center", justifyContent:"center", flexShrink:0, border:`2px solid ${C.accent}` }}>
+    {initials}
   </div>
-  <nav class="sidebar-nav">
-    <a href="#" class="nav-item active" data-page="dashboard">
-      <span class="nav-icon">⊞</span> Dashboard
-    </a>
-    <a href="#" class="nav-item" data-page="contacts">
-      <span class="nav-icon">👥</span> Contacts
-    </a>
-    <a href="#" class="nav-item" data-page="crops">
-      <span class="nav-icon">🌱</span> Crops & Fields
-    </a>
-    <a href="#" class="nav-item" data-page="inventory">
-      <span class="nav-icon">📦</span> Inventory
-    </a>
-    <a href="#" class="nav-item" data-page="tasks">
-      <span class="nav-icon">✓</span> Tasks
-    </a>
-    <a href="#" class="nav-item" data-page="finances">
-      <span class="nav-icon">₹</span> Finances
-    </a>
-    <a href="#" class="nav-item" data-page="reports">
-      <span class="nav-icon">📊</span> Reports
-    </a>
-    <a href="#" class="nav-item" data-page="settings">
-      <span class="nav-icon">⚙</span> Settings
-    </a>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="farm-info">
-      <div class="farm-avatar">RK</div>
-      <div>
-        <div class="farm-name">Rajan Kumar Farm</div>
-        <div class="farm-loc">Tamil Nadu, IN</div>
+);
+
+const StatCard = ({ label, value, sub, icon, accent }) => (
+  <div style={{ background:C.card, borderRadius:14, padding:"20px 22px",
+    border:`1px solid ${C.border}`, flex:1, minWidth:160 }}>
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+      <span style={{ fontSize:13, color:C.muted, fontWeight:500 }}>{label}</span>
+      <span style={{ fontSize:22 }}>{icon}</span>
+    </div>
+    <div style={{ fontSize:30, fontWeight:800, color: accent || C.primary, letterSpacing:-1 }}>{value}</div>
+    {sub && <div style={{ fontSize:12, color:C.muted, marginTop:4 }}>{sub}</div>}
+  </div>
+);
+
+const SectionHeader = ({ title, sub }) => (
+  <div style={{ marginBottom:20 }}>
+    <h2 style={{ fontSize:20, fontWeight:800, color:C.text, margin:0 }}>{title}</h2>
+    {sub && <p style={{ fontSize:13, color:C.muted, margin:"4px 0 0" }}>{sub}</p>}
+  </div>
+);
+
+const Table = ({ cols, rows }) => (
+  <div style={{ overflowX:"auto" }}>
+    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+      <thead>
+        <tr style={{ background:C.bg }}>
+          {cols.map(c => (
+            <th key={c} style={{ padding:"10px 14px", textAlign:"left", color:C.muted,
+              fontWeight:600, fontSize:12, borderBottom:`1px solid ${C.border}`,
+              whiteSpace:"nowrap" }}>{c}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r,i) => (
+          <tr key={i} style={{ borderBottom:`1px solid ${C.border}` }}
+            onMouseEnter={e=>e.currentTarget.style.background=C.bg}
+            onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+            {r.map((cell,j) => (
+              <td key={j} style={{ padding:"12px 14px", color:C.text, verticalAlign:"middle" }}>
+                {cell}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+// ── Sidebar ──────────────────────────────────────────────────────────────────
+const nav = [
+  { id:"dashboard",   label:"Dashboard",        icon:"🏠" },
+  { id:"zones",       label:"Zones & Fields",   icon:"🌾" },
+  { id:"employees",   label:"Employees",        icon:"👷" },
+  { id:"tasks",       label:"Tasks",            icon:"✅" },
+  { id:"attendance",  label:"Attendance",       icon:"🕐" },
+  { id:"expenses",    label:"Daily Expenses",   icon:"💰" },
+  { id:"loading",     label:"Loading Details",  icon:"🚛" },
+  { id:"vendors",     label:"Vendors",          icon:"🤝" },
+];
+
+const Sidebar = ({ active, setActive, collapsed, setCollapsed }) => (
+  <aside style={{
+    width: collapsed ? 64 : 230, background: C.primary, minHeight:"100vh",
+    display:"flex", flexDirection:"column", transition:"width .25s", flexShrink:0,
+    position:"sticky", top:0, height:"100vh", overflowY:"auto",
+  }}>
+    <div style={{ padding: collapsed ? "20px 14px" : "24px 20px", borderBottom:`1px solid rgba(255,255,255,.1)`, display:"flex", alignItems:"center", gap:10 }}>
+      <span style={{ fontSize:26 }}>🌿</span>
+      {!collapsed && <div>
+        <div style={{ color:"#fff", fontWeight:800, fontSize:16, lineHeight:1.1 }}>Farm CRM</div>
+        <div style={{ color:"rgba(255,255,255,.5)", fontSize:11 }}>Admin Panel</div>
+      </div>}
+      <button onClick={()=>setCollapsed(!collapsed)}
+        style={{ marginLeft:"auto", background:"rgba(255,255,255,.1)", border:"none",
+          color:"#fff", borderRadius:8, width:28, height:28, cursor:"pointer", fontSize:14,
+          display:"flex", alignItems:"center", justifyContent:"center" }}>
+        {collapsed ? "›" : "‹"}
+      </button>
+    </div>
+
+    <nav style={{ padding:"12px 8px", flex:1 }}>
+      {nav.map(n => (
+        <button key={n.id} onClick={()=>setActive(n.id)}
+          style={{ display:"flex", alignItems:"center", gap:12, width:"100%",
+            padding: collapsed ? "11px 14px" : "11px 14px", borderRadius:10,
+            border:"none", cursor:"pointer", marginBottom:2, textAlign:"left",
+            background: active===n.id ? "rgba(139,195,74,.25)" : "transparent",
+            borderLeft: active===n.id ? `3px solid ${C.accent}` : "3px solid transparent",
+            color: active===n.id ? C.accent : "rgba(255,255,255,.7)",
+            transition:"all .15s", fontSize:13, fontWeight: active===n.id ? 700 : 500,
+          }}>
+          <span style={{ fontSize:16, flexShrink:0 }}>{n.icon}</span>
+          {!collapsed && <span>{n.label}</span>}
+        </button>
+      ))}
+    </nav>
+
+    <div style={{ padding: collapsed ? "12px 8px" : "16px 12px", borderTop:`1px solid rgba(255,255,255,.1)` }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <Avatar initials="AD" size={32} />
+        {!collapsed && <div>
+          <div style={{ color:"#fff", fontSize:13, fontWeight:600 }}>Admin</div>
+          <div style={{ color:"rgba(255,255,255,.5)", fontSize:11 }}>Farm Owner</div>
+        </div>}
       </div>
     </div>
-  </div>
-</aside>
+  </aside>
+);
 
-<!-- MAIN CONTENT -->
-<main class="main-content">
-  <!-- TOP BAR -->
-  <header class="topbar">
-    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-    <div class="topbar-title" id="page-title">Dashboard</div>
-    <div class="topbar-actions">
-      <button class="btn-icon" title="Notifications" onclick="showNotifications()">🔔 <span class="badge">3</span></button>
-      <button class="btn-primary" onclick="showModal('quickAdd')">+ Add New</button>
+// ── Pages ────────────────────────────────────────────────────────────────────
+
+const Dashboard = () => {
+  const totalTasks = initialTasks.length;
+  const done = initialTasks.filter(t=>t.status==="completed").length;
+  const inProg = initialTasks.filter(t=>t.status==="in-progress").length;
+  const pending = initialTasks.filter(t=>t.status==="pending").length;
+  const totalExp = expenses.reduce((a,e)=>a+e.amount,0);
+  const present = attendance.filter(a=>a.today==="present").length;
+
+  return (
+    <div>
+      <SectionHeader title="Farm Dashboard" sub="Overview of all farm operations · Today, Apr 26 2025" />
+
+      {/* Stat row */}
+      <div style={{ display:"flex", gap:14, flexWrap:"wrap", marginBottom:24 }}>
+        <StatCard label="Total Employees" value={employees.length} sub="7 present today" icon="👷" />
+        <StatCard label="Tasks Today" value={totalTasks} sub={`${done} completed`} icon="✅" accent={C.success} />
+        <StatCard label="In Progress" value={inProg} sub="Across all zones" icon="⚙️" accent={C.warn} />
+        <StatCard label="Today's Expenses" value={`₹${(totalExp).toLocaleString()}`} sub="6 entries logged" icon="💰" accent={C.danger} />
+        <StatCard label="Attendance" value={`${present}/8`} sub="1 on leave" icon="🕐" accent={C.info} />
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:24 }}>
+        {/* Zone progress */}
+        <div style={{ background:C.card, borderRadius:14, padding:20, border:`1px solid ${C.border}` }}>
+          <div style={{ fontWeight:700, fontSize:15, marginBottom:16, color:C.text }}>Zone Task Progress</div>
+          {zones.map(z => {
+            const zt = initialTasks.filter(t=>t.zone===z);
+            const zd = zt.filter(t=>t.status==="completed").length;
+            const pct = zt.length ? Math.round(zd/zt.length*100) : 0;
+            return (
+              <div key={z} style={{ marginBottom:12 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:4 }}>
+                  <span style={{ fontWeight:600, color:C.text }}>{z}</span>
+                  <span style={{ color:C.muted }}>{zd}/{zt.length} tasks · {pct}%</span>
+                </div>
+                <div style={{ height:8, background:C.bg, borderRadius:8, overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${pct}%`, background:
+                    pct===100 ? C.success : pct>50 ? C.accent : C.warn,
+                    borderRadius:8, transition:"width .3s" }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Recent tasks */}
+        <div style={{ background:C.card, borderRadius:14, padding:20, border:`1px solid ${C.border}` }}>
+          <div style={{ fontWeight:700, fontSize:15, marginBottom:16, color:C.text }}>Recent Tasks</div>
+          {initialTasks.slice(0,6).map(t => (
+            <div key={t.id} style={{ display:"flex", alignItems:"center", gap:12,
+              padding:"10px 0", borderBottom:`1px solid ${C.border}` }}>
+              <span style={{ fontSize:18 }}>{t.status==="completed"?"✅":t.status==="in-progress"?"⚙️":"🕓"}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:C.text, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{t.title}</div>
+                <div style={{ fontSize:11, color:C.muted }}>{t.zone} · {t.assignedTo}</div>
+              </div>
+              <Badge>{t.status}</Badge>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Expense breakdown */}
+      <div style={{ background:C.card, borderRadius:14, padding:20, border:`1px solid ${C.border}` }}>
+        <div style={{ fontWeight:700, fontSize:15, marginBottom:16, color:C.text }}>Expense Breakdown</div>
+        <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
+          {["Fertilizer","Labour","Pesticide","Fuel","Equipment","Seeds"].map(cat => {
+            const amt = expenses.filter(e=>e.category===cat).reduce((a,e)=>a+e.amount,0);
+            const icons = {Fertilizer:"🧪",Labour:"👷",Pesticide:"🌿",Fuel:"⛽",Equipment:"🔧",Seeds:"🌱"};
+            return amt > 0 ? (
+              <div key={cat} style={{ background:C.bg, borderRadius:10, padding:"12px 18px",
+                textAlign:"center", flex:1, minWidth:100 }}>
+                <div style={{ fontSize:22 }}>{icons[cat]}</div>
+                <div style={{ fontSize:12, color:C.muted, fontWeight:500, marginTop:4 }}>{cat}</div>
+                <div style={{ fontSize:16, fontWeight:800, color:C.primary }}>₹{amt.toLocaleString()}</div>
+              </div>
+            ) : null;
+          })}
+        </div>
+      </div>
     </div>
-  </header>
+  );
+};
 
-  <!-- PAGES -->
-  <div class="page-container">
-
-    <!-- ========== DASHBOARD ========== -->
-    <section class="page active" id="page-dashboard">
-      <div class="page-header">
-        <h1>Good morning, Rajan 👋</h1>
-        <p class="subtitle">Here's what's happening on your farm today — Tuesday, April 28, 2026</p>
+const Zones = () => {
+  const [sel, setSel] = useState("Zone A");
+  return (
+    <div>
+      <SectionHeader title="Zones & Fields" sub="Farm is divided into 8 operational zones" />
+      <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:24 }}>
+        {zones.map(z => (
+          <button key={z} onClick={()=>setSel(z)}
+            style={{ padding:"8px 16px", borderRadius:20, border:`1.5px solid ${sel===z?C.primary:C.border}`,
+              background: sel===z ? C.primary : C.card, color: sel===z ? "#fff" : C.text,
+              cursor:"pointer", fontWeight:600, fontSize:13, transition:"all .15s" }}>
+            {z}
+          </button>
+        ))}
       </div>
-
-      <!-- STAT CARDS -->
-      <div class="stats-grid">
-        <div class="stat-card green">
-          <div class="stat-label">Active Crops</div>
-          <div class="stat-value">8</div>
-          <div class="stat-change up">+2 this season</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-label">Total Revenue</div>
-          <div class="stat-value">₹4.2L</div>
-          <div class="stat-change up">+18% vs last year</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="stat-label">Pending Tasks</div>
-          <div class="stat-value">12</div>
-          <div class="stat-change down">3 overdue</div>
-        </div>
-        <div class="stat-card coral">
-          <div class="stat-label">Contacts</div>
-          <div class="stat-value">34</div>
-          <div class="stat-change up">5 buyers, 8 suppliers</div>
-        </div>
-      </div>
-
-      <!-- WEATHER + QUICK TASKS -->
-      <div class="two-col">
-        <div class="card">
-          <div class="card-header">
-            <h3>Weather This Week</h3>
-            <span class="tag tag-green">Chennai</span>
-          </div>
-          <div class="weather-row">
-            <div class="weather-day">
-              <div class="w-day">Mon</div>
-              <div class="w-icon">☀</div>
-              <div class="w-temp">34°</div>
-            </div>
-            <div class="weather-day active">
-              <div class="w-day">Tue</div>
-              <div class="w-icon">⛅</div>
-              <div class="w-temp">31°</div>
-            </div>
-            <div class="weather-day">
-              <div class="w-day">Wed</div>
-              <div class="w-icon">🌧</div>
-              <div class="w-temp">27°</div>
-            </div>
-            <div class="weather-day">
-              <div class="w-day">Thu</div>
-              <div class="w-icon">🌧</div>
-              <div class="w-temp">26°</div>
-            </div>
-            <div class="weather-day">
-              <div class="w-day">Fri</div>
-              <div class="w-icon">☀</div>
-              <div class="w-temp">33°</div>
-            </div>
-            <div class="weather-day">
-              <div class="w-day">Sat</div>
-              <div class="w-icon">☀</div>
-              <div class="w-temp">35°</div>
-            </div>
-            <div class="weather-day">
-              <div class="w-day">Sun</div>
-              <div class="w-icon">⛅</div>
-              <div class="w-temp">32°</div>
-            </div>
-          </div>
-          <div class="weather-alert">
-            <span class="alert-icon">⚠</span>
-            Rain expected Wednesday–Thursday. Consider irrigation adjustments.
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>Today's Tasks</h3>
-            <a href="#" onclick="switchPage('tasks')" class="link">View all</a>
-          </div>
-          <div class="task-list" id="dash-tasks">
-            <div class="task-item">
-              <input type="checkbox" class="task-check" onchange="toggleTask(this)">
-              <div class="task-content">
-                <div class="task-title">Irrigate Field A (Rice)</div>
-                <div class="task-meta">Due today · High priority</div>
-              </div>
-              <span class="tag tag-red">High</span>
-            </div>
-            <div class="task-item">
-              <input type="checkbox" class="task-check" onchange="toggleTask(this)">
-              <div class="task-content">
-                <div class="task-title">Apply fertilizer — Field C</div>
-                <div class="task-meta">Due today · Medium priority</div>
-              </div>
-              <span class="tag tag-amber">Med</span>
-            </div>
-            <div class="task-item">
-              <input type="checkbox" class="task-check" checked onchange="toggleTask(this)">
-              <div class="task-content">
-                <div class="task-title done">Harvest tomatoes from Plot 2</div>
-                <div class="task-meta">Completed · 9:30 AM</div>
-              </div>
-              <span class="tag tag-green">Done</span>
-            </div>
-            <div class="task-item">
-              <input type="checkbox" class="task-check" onchange="toggleTask(this)">
-              <div class="task-content">
-                <div class="task-title">Call buyer — Ravi Traders</div>
-                <div class="task-meta">Due today · Low priority</div>
-              </div>
-              <span class="tag tag-blue">Low</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RECENT ACTIVITY + CROP STATUS -->
-      <div class="two-col">
-        <div class="card">
-          <div class="card-header">
-            <h3>Crop Status Overview</h3>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr><th>Crop</th><th>Field</th><th>Stage</th><th>Harvest</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="crop-icon">🌾</span> Paddy (IR64)</td>
-                <td>Field A</td>
-                <td>Flowering</td>
-                <td>Jun 12</td>
-                <td><span class="tag tag-green">On Track</span></td>
-              </tr>
-              <tr>
-                <td><span class="crop-icon">🍅</span> Tomato</td>
-                <td>Plot 2</td>
-                <td>Harvest</td>
-                <td>Today</td>
-                <td><span class="tag tag-amber">Harvesting</span></td>
-              </tr>
-              <tr>
-                <td><span class="crop-icon">🧅</span> Onion</td>
-                <td>Field B</td>
-                <td>Bulbing</td>
-                <td>May 20</td>
-                <td><span class="tag tag-green">On Track</span></td>
-              </tr>
-              <tr>
-                <td><span class="crop-icon">🌶</span> Chilli</td>
-                <td>Plot 1</td>
-                <td>Seedling</td>
-                <td>Jul 30</td>
-                <td><span class="tag tag-red">Needs Water</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>Recent Activity</h3>
-          </div>
-          <div class="activity-feed">
-            <div class="activity-item">
-              <div class="activity-dot green"></div>
-              <div class="activity-content">
-                <div class="activity-title">Tomatoes harvested — 120 kg</div>
-                <div class="activity-time">Today, 9:30 AM</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot blue"></div>
-              <div class="activity-content">
-                <div class="activity-title">Invoice #INV-042 sent to Ravi Traders</div>
-                <div class="activity-time">Yesterday, 4:15 PM</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot amber"></div>
-              <div class="activity-content">
-                <div class="activity-title">Fertilizer stock low — Urea below 20%</div>
-                <div class="activity-time">Yesterday, 11:00 AM</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot green"></div>
-              <div class="activity-content">
-                <div class="activity-title">New buyer contact added — Sundar Co.</div>
-                <div class="activity-time">Apr 26, 3:00 PM</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot coral"></div>
-              <div class="activity-content">
-                <div class="activity-title">Payment received ₹18,500 from Murugan Exports</div>
-                <div class="activity-time">Apr 25, 10:20 AM</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== CONTACTS ========== -->
-    <section class="page" id="page-contacts">
-      <div class="page-header">
-        <h1>Contacts</h1>
-        <button class="btn-primary" onclick="showModal('addContact')">+ Add Contact</button>
-      </div>
-      <div class="filter-bar">
-        <input type="text" class="search-input" placeholder="Search contacts..." id="contactSearch" oninput="filterContacts()">
-        <select class="filter-select" id="contactFilter" onchange="filterContacts()">
-          <option value="">All Types</option>
-          <option value="buyer">Buyer</option>
-          <option value="supplier">Supplier</option>
-          <option value="labour">Labour</option>
-          <option value="equipment">Equipment</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-      <div class="contacts-grid" id="contacts-grid"></div>
-    </section>
-
-    <!-- ========== CROPS & FIELDS ========== -->
-    <section class="page" id="page-crops">
-      <div class="page-header">
-        <h1>Crops & Fields</h1>
-        <button class="btn-primary" onclick="showModal('addCrop')">+ Add Crop</button>
-      </div>
-      <div class="crops-grid" id="crops-grid"></div>
-    </section>
-
-    <!-- ========== INVENTORY ========== -->
-    <section class="page" id="page-inventory">
-      <div class="page-header">
-        <h1>Inventory</h1>
-        <button class="btn-primary" onclick="showModal('addInventory')">+ Add Item</button>
-      </div>
-      <div class="filter-bar">
-        <input type="text" class="search-input" placeholder="Search inventory..." id="invSearch" oninput="filterInventory()">
-        <select class="filter-select" id="invFilter" onchange="filterInventory()">
-          <option value="">All Categories</option>
-          <option value="fertilizer">Fertilizer</option>
-          <option value="pesticide">Pesticide</option>
-          <option value="seed">Seeds</option>
-          <option value="equipment">Equipment</option>
-          <option value="fuel">Fuel</option>
-        </select>
-      </div>
-      <table class="data-table full" id="inventory-table">
-        <thead>
-          <tr><th>Item</th><th>Category</th><th>Stock</th><th>Unit</th><th>Reorder Level</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="inventory-body"></tbody>
-      </table>
-    </section>
-
-    <!-- ========== TASKS ========== -->
-    <section class="page" id="page-tasks">
-      <div class="page-header">
-        <h1>Tasks</h1>
-        <button class="btn-primary" onclick="showModal('addTask')">+ Add Task</button>
-      </div>
-      <div class="kanban-board" id="kanban-board">
-        <div class="kanban-col" id="col-todo">
-          <div class="kanban-col-header"><span class="col-dot red"></span>To Do <span class="col-count" id="cnt-todo">0</span></div>
-          <div class="kanban-cards" id="cards-todo" ondragover="event.preventDefault()" ondrop="dropCard(event,'todo')"></div>
-        </div>
-        <div class="kanban-col" id="col-inprogress">
-          <div class="kanban-col-header"><span class="col-dot amber"></span>In Progress <span class="col-count" id="cnt-inprogress">0</span></div>
-          <div class="kanban-cards" id="cards-inprogress" ondragover="event.preventDefault()" ondrop="dropCard(event,'inprogress')"></div>
-        </div>
-        <div class="kanban-col" id="col-done">
-          <div class="kanban-col-header"><span class="col-dot green"></span>Done <span class="col-count" id="cnt-done">0</span></div>
-          <div class="kanban-cards" id="cards-done" ondragover="event.preventDefault()" ondrop="dropCard(event,'done')"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== FINANCES ========== -->
-    <section class="page" id="page-finances">
-      <div class="page-header">
-        <h1>Finances</h1>
-        <button class="btn-primary" onclick="showModal('addTransaction')">+ Add Transaction</button>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card green">
-          <div class="stat-label">Total Income</div>
-          <div class="stat-value">₹4,24,500</div>
-          <div class="stat-change up">This year</div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-label">Total Expenses</div>
-          <div class="stat-value">₹1,87,200</div>
-          <div class="stat-change down">This year</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="stat-label">Net Profit</div>
-          <div class="stat-value">₹2,37,300</div>
-          <div class="stat-change up">+22% vs last year</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-label">Pending Dues</div>
-          <div class="stat-value">₹43,000</div>
-          <div class="stat-change down">3 invoices</div>
-        </div>
-      </div>
-      <div class="two-col">
-        <div class="card">
-          <div class="card-header"><h3>Recent Transactions</h3></div>
-          <table class="data-table">
-            <thead>
-              <tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th></tr>
-            </thead>
-            <tbody id="transactions-body"></tbody>
-          </table>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Monthly Summary</h3></div>
-          <div class="bar-chart-container">
-            <canvas id="financeChart" style="width:100%;height:220px;"></canvas>
-            <div class="bar-chart" id="bar-chart"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== REPORTS ========== -->
-    <section class="page" id="page-reports">
-      <div class="page-header">
-        <h1>Reports</h1>
-      </div>
-      <div class="reports-grid">
-        <div class="report-card" onclick="showReportDetail('yield')">
-          <div class="report-icon green">📈</div>
-          <h3>Crop Yield Report</h3>
-          <p>Yield per acre, variety comparison, seasonal trends</p>
-          <button class="btn-outline">View Report</button>
-        </div>
-        <div class="report-card" onclick="showReportDetail('finance')">
-          <div class="report-icon blue">₹</div>
-          <h3>Financial Summary</h3>
-          <p>Income, expenses, profit/loss, cash flow analysis</p>
-          <button class="btn-outline">View Report</button>
-        </div>
-        <div class="report-card" onclick="showReportDetail('inventory')">
-          <div class="report-icon amber">📦</div>
-          <h3>Inventory Report</h3>
-          <p>Stock levels, usage history, reorder alerts</p>
-          <button class="btn-outline">View Report</button>
-        </div>
-        <div class="report-card" onclick="showReportDetail('labour')">
-          <div class="report-icon coral">👷</div>
-          <h3>Labour Report</h3>
-          <p>Working hours, wages paid, productivity metrics</p>
-          <button class="btn-outline">View Report</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== SETTINGS ========== -->
-    <section class="page" id="page-settings">
-      <div class="page-header">
-        <h1>Settings</h1>
-      </div>
-      <div class="settings-grid">
-        <div class="card">
-          <h3>Farm Profile</h3>
-          <div class="form-group">
-            <label>Farm Name</label>
-            <input type="text" class="form-input" value="Rajan Kumar Farm">
-          </div>
-          <div class="form-group">
-            <label>Owner Name</label>
-            <input type="text" class="form-input" value="Rajan Kumar">
-          </div>
-          <div class="form-group">
-            <label>Location</label>
-            <input type="text" class="form-input" value="Villupuram, Tamil Nadu">
-          </div>
-          <div class="form-group">
-            <label>Total Land (acres)</label>
-            <input type="number" class="form-input" value="12.5">
-          </div>
-          <button class="btn-primary" onclick="showToast('Farm profile saved!')">Save Changes</button>
-        </div>
-        <div class="card">
-          <h3>Preferences</h3>
-          <div class="form-group">
-            <label>Currency</label>
-            <select class="form-input">
-              <option>INR (₹)</option>
-              <option>USD ($)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Language</label>
-            <select class="form-input">
-              <option>English</option>
-              <option>Tamil</option>
-              <option>Hindi</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Date Format</label>
-            <select class="form-input">
-              <option>DD/MM/YYYY</option>
-              <option>MM/DD/YYYY</option>
-            </select>
-          </div>
-          <div class="toggle-row">
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
+        {/* Zone info */}
+        <div style={{ background:C.card, borderRadius:14, padding:24, border:`1px solid ${C.border}` }}>
+          <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:20 }}>
+            <div style={{ width:52, height:52, borderRadius:14, background:C.accentSoft,
+              display:"flex", alignItems:"center", justifyContent:"center", fontSize:26 }}>🌾</div>
             <div>
-              <div class="toggle-label">Email Notifications</div>
-              <div class="toggle-sub">Get alerts for tasks, stock levels</div>
+              <div style={{ fontSize:20, fontWeight:800, color:C.text }}>{sel}</div>
+              <div style={{ fontSize:13, color:C.muted }}>{fields[sel].length} fields · {initialTasks.filter(t=>t.zone===sel).length} tasks assigned</div>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" checked>
-              <span class="toggle-slider"></span>
-            </label>
           </div>
-          <div class="toggle-row">
-            <div>
-              <div class="toggle-label">Weather Alerts</div>
-              <div class="toggle-sub">Receive weather-based farming tips</div>
+          <div style={{ fontWeight:600, fontSize:13, color:C.muted, marginBottom:10 }}>FIELDS IN THIS ZONE</div>
+          {fields[sel].map(f => {
+            const ft = initialTasks.filter(t=>t.field===f);
+            const fd = ft.filter(t=>t.status==="completed").length;
+            return (
+              <div key={f} style={{ background:C.bg, borderRadius:10, padding:"12px 16px",
+                marginBottom:8, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div>
+                  <div style={{ fontWeight:600, fontSize:13, color:C.text }}>{f}</div>
+                  <div style={{ fontSize:11, color:C.muted }}>{ft.length} tasks · {fd} done</div>
+                </div>
+                <span style={{ fontSize:20 }}>🌱</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Zone employee */}
+        <div style={{ background:C.card, borderRadius:14, padding:24, border:`1px solid ${C.border}` }}>
+          <div style={{ fontWeight:600, fontSize:13, color:C.muted, marginBottom:14 }}>ASSIGNED EMPLOYEE</div>
+          {employees.filter(e=>e.zone===sel).map(e => (
+            <div key={e.id} style={{ background:C.bg, borderRadius:12, padding:"16px",
+              marginBottom:12 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+                <Avatar initials={e.avatar} />
+                <div>
+                  <div style={{ fontWeight:700, color:C.text }}>{e.name}</div>
+                  <div style={{ fontSize:12, color:C.muted }}>{e.role}</div>
+                </div>
+                <Badge color={e.status}>{e.status}</Badge>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
+                {[["Tasks",e.tasks+""],["Done",e.done+""],["Hours",e.hours+"h"]].map(([l,v])=>(
+                  <div key={l} style={{ background:C.card, borderRadius:8, padding:"8px 10px", textAlign:"center" }}>
+                    <div style={{ fontSize:16, fontWeight:800, color:C.primary }}>{v}</div>
+                    <div style={{ fontSize:11, color:C.muted }}>{l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <button class="btn-primary" onclick="showToast('Preferences saved!')">Save Preferences</button>
+          ))}
+          <div style={{ fontWeight:600, fontSize:13, color:C.muted, marginTop:16, marginBottom:12 }}>ZONE TASKS</div>
+          {initialTasks.filter(t=>t.zone===sel).map(t => (
+            <div key={t.id} style={{ display:"flex", justifyContent:"space-between",
+              alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${C.border}` }}>
+              <div>
+                <div style={{ fontWeight:600, fontSize:13, color:C.text }}>{t.title}</div>
+                <div style={{ fontSize:11, color:C.muted }}>{t.field} · Due {t.due}</div>
+              </div>
+              <Badge>{t.status}</Badge>
+            </div>
+          ))}
         </div>
       </div>
-    </section>
+    </div>
+  );
+};
 
-  </div><!-- end page-container -->
-</main>
+const Employees = () => (
+  <div>
+    <SectionHeader title="Employees" sub="8 farm employees across all zones" />
+    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(260px,1fr))", gap:16 }}>
+      {employees.map(e => (
+        <div key={e.id} style={{ background:C.card, borderRadius:14, padding:20,
+          border:`1px solid ${C.border}` }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+            <Avatar initials={e.avatar} size={44} />
+            <div style={{ flex:1 }}>
+              <div style={{ fontWeight:700, fontSize:15, color:C.text }}>{e.name}</div>
+              <div style={{ fontSize:12, color:C.muted }}>{e.role}</div>
+              <div style={{ fontSize:11, color:C.primaryLight, fontWeight:600 }}>{e.zone}</div>
+            </div>
+            <Badge color={e.status}>{e.status}</Badge>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:14 }}>
+            {[
+              ["🗂️","Tasks",e.tasks],
+              ["✅","Done",e.done],
+              ["⏱️","Hours",e.hours+"h"],
+            ].map(([ic,lb,vl])=>(
+              <div key={lb} style={{ background:C.bg, borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
+                <div style={{ fontSize:16 }}>{ic}</div>
+                <div style={{ fontSize:17, fontWeight:800, color:C.primary }}>{vl}</div>
+                <div style={{ fontSize:10, color:C.muted }}>{lb}</div>
+              </div>
+            ))}
+          </div>
+          {/* Mini progress bar */}
+          <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>
+            Task completion: {Math.round(e.done/e.tasks*100)}%
+          </div>
+          <div style={{ height:6, background:C.bg, borderRadius:6 }}>
+            <div style={{ height:"100%", width:`${Math.round(e.done/e.tasks*100)}%`,
+              background: e.done===e.tasks ? C.success : C.accent, borderRadius:6 }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
-<!-- ========== MODALS ========== -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+const Tasks = () => {
+  const [filter, setFilter] = useState("all");
+  const filtered = filter==="all" ? initialTasks : initialTasks.filter(t=>t.status===filter);
+  return (
+    <div>
+      <SectionHeader title="Task Management" sub="Assign & monitor tasks across all zones and employees" />
+      <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
+        {["all","completed","in-progress","pending"].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)}
+            style={{ padding:"7px 16px", borderRadius:20, border:`1.5px solid ${filter===f?C.primary:C.border}`,
+              background: filter===f ? C.primary : C.card, color: filter===f ? "#fff" : C.text,
+              cursor:"pointer", fontWeight:600, fontSize:12, textTransform:"capitalize", transition:"all .15s" }}>
+            {f==="all"?`All (${initialTasks.length})`:f==="completed"?`✅ Completed (${initialTasks.filter(t=>t.status===f).length})`:
+             f==="in-progress"?`⚙️ In Progress (${initialTasks.filter(t=>t.status===f).length})`:
+             `🕓 Pending (${initialTasks.filter(t=>t.status===f).length})`}
+          </button>
+        ))}
+      </div>
+      <div style={{ background:C.card, borderRadius:14, border:`1px solid ${C.border}`, overflow:"hidden" }}>
+        <Table
+          cols={["Task","Zone","Field","Assigned To","Priority","Due Date","Hours","Status"]}
+          rows={filtered.map(t=>[
+            <span style={{ fontWeight:600 }}>{t.title}</span>,
+            t.zone,
+            t.field,
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <Avatar initials={t.assignedTo.split(" ").map(w=>w[0]).join("")} size={26} />
+              <span>{t.assignedTo}</span>
+            </div>,
+            <Badge color={t.priority}>{t.priority}</Badge>,
+            t.due,
+            `${t.hours}h`,
+            <Badge>{t.status}</Badge>,
+          ])}
+        />
+      </div>
+    </div>
+  );
+};
 
-<!-- ADD CONTACT MODAL -->
-<div class="modal" id="modal-addContact">
-  <div class="modal-header">
-    <h2>Add Contact</h2>
-    <button class="modal-close" onclick="closeModal()">✕</button>
-  </div>
-  <div class="modal-body">
-    <div class="form-group">
-      <label>Name *</label>
-      <input type="text" class="form-input" id="c-name" placeholder="Full name">
+const Attendance = () => (
+  <div>
+    <SectionHeader title="Attendance" sub="Daily attendance tracking for all employees · Apr 26, 2025" />
+    <div style={{ display:"flex", gap:14, marginBottom:24, flexWrap:"wrap" }}>
+      <StatCard label="Present" value={attendance.filter(a=>a.today==="present").length} icon="✅" accent={C.success} />
+      <StatCard label="Absent" value={attendance.filter(a=>a.today==="absent").length} icon="❌" accent={C.danger} />
+      <StatCard label="Avg Hours" value={`${(attendance.reduce((a,e)=>a+(e.hours||0),0)/attendance.filter(a=>a.today==="present").length).toFixed(1)}h`} icon="⏱️" />
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Type *</label>
-        <select class="form-input" id="c-type">
-          <option value="buyer">Buyer</option>
-          <option value="supplier">Supplier</option>
-          <option value="labour">Labour</option>
-          <option value="equipment">Equipment</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Phone</label>
-        <input type="tel" class="form-input" id="c-phone" placeholder="+91 XXXXX XXXXX">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Village / Town</label>
-      <input type="text" class="form-input" id="c-location" placeholder="Location">
-    </div>
-    <div class="form-group">
-      <label>Notes</label>
-      <textarea class="form-input" id="c-notes" rows="2" placeholder="Any notes about this contact..."></textarea>
+    <div style={{ background:C.card, borderRadius:14, border:`1px solid ${C.border}`, overflow:"hidden", marginBottom:20 }}>
+      <Table
+        cols={["Employee","Zone","Today","In Time","Out Time","Hours","Week (Mon-Sun)"]}
+        rows={attendance.map(a=>[
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <Avatar initials={a.name.split(" ").map(w=>w[0]).join("")} size={30} />
+            <span style={{ fontWeight:600 }}>{a.name}</span>
+          </div>,
+          a.zone,
+          <Badge color={a.today}>{a.today}</Badge>,
+          a.inTime, a.outTime,
+          a.hours ? `${a.hours.toFixed(1)}h` : "--",
+          <div style={{ display:"flex", gap:3 }}>
+            {["M","T","W","T","F","S","S"].map((d,i)=>(
+              <div key={i} style={{ width:22, height:22, borderRadius:4,
+                background: a.week[i] ? C.success : C.dangerSoft,
+                color: a.week[i] ? "#fff" : C.danger,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:9, fontWeight:700 }}>{d}</div>
+            ))}
+          </div>
+        ])}
+      />
     </div>
   </div>
-  <div class="modal-footer">
-    <button class="btn-outline" onclick="closeModal()">Cancel</button>
-    <button class="btn-primary" onclick="addContact()">Save Contact</button>
-  </div>
-</div>
+);
 
-<!-- ADD CROP MODAL -->
-<div class="modal" id="modal-addCrop">
-  <div class="modal-header">
-    <h2>Add Crop</h2>
-    <button class="modal-close" onclick="closeModal()">✕</button>
-  </div>
-  <div class="modal-body">
-    <div class="form-row">
-      <div class="form-group">
-        <label>Crop Name *</label>
-        <input type="text" class="form-input" id="cr-name" placeholder="e.g. Paddy">
+const Expenses = () => {
+  const [cat, setCat] = useState("All");
+  const cats = ["All","Fertilizer","Labour","Pesticide","Fuel","Equipment","Seeds"];
+  const filtered = cat==="All" ? expenses : expenses.filter(e=>e.category===cat);
+  const total = filtered.reduce((a,e)=>a+e.amount,0);
+  return (
+    <div>
+      <SectionHeader title="Daily Expense Tracker" sub="Log and monitor all farm expenditures" />
+      <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
+        {cats.map(c=>(
+          <button key={c} onClick={()=>setCat(c)}
+            style={{ padding:"7px 14px", borderRadius:20, border:`1.5px solid ${cat===c?C.primary:C.border}`,
+              background: cat===c ? C.primary : C.card, color: cat===c?"#fff":C.text,
+              cursor:"pointer", fontWeight:600, fontSize:12, transition:"all .15s" }}>{c}</button>
+        ))}
       </div>
-      <div class="form-group">
-        <label>Variety</label>
-        <input type="text" class="form-input" id="cr-variety" placeholder="e.g. IR64">
+      <div style={{ background:C.accentSoft, borderRadius:12, padding:"14px 20px",
+        marginBottom:20, display:"flex", justifyContent:"space-between", alignItems:"center",
+        border:`1px solid ${C.accent}` }}>
+        <span style={{ fontWeight:600, color:C.primary }}>Total ({cat})</span>
+        <span style={{ fontWeight:800, fontSize:22, color:C.primary }}>₹{total.toLocaleString()}</span>
+      </div>
+      <div style={{ background:C.card, borderRadius:14, border:`1px solid ${C.border}`, overflow:"hidden" }}>
+        <Table
+          cols={["Date","Category","Description","Zone","Logged By","Amount"]}
+          rows={filtered.map(e=>[
+            e.date,
+            <span style={{ display:"flex", alignItems:"center", gap:6 }}>
+              <span>{{Fertilizer:"🧪",Labour:"👷",Pesticide:"🌿",Fuel:"⛽",Equipment:"🔧",Seeds:"🌱"}[e.category]}</span>
+              {e.category}
+            </span>,
+            e.description, e.zone, e.by,
+            <span style={{ fontWeight:700, color:C.primary }}>₹{e.amount.toLocaleString()}</span>
+          ])}
+        />
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Field / Plot *</label>
-        <input type="text" class="form-input" id="cr-field" placeholder="e.g. Field A">
-      </div>
-      <div class="form-group">
-        <label>Area (acres)</label>
-        <input type="number" class="form-input" id="cr-area" placeholder="2.5">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Sowing Date</label>
-        <input type="date" class="form-input" id="cr-sow">
-      </div>
-      <div class="form-group">
-        <label>Expected Harvest</label>
-        <input type="date" class="form-input" id="cr-harvest">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Stage</label>
-      <select class="form-input" id="cr-stage">
-        <option>Sowing</option>
-        <option>Germination</option>
-        <option>Seedling</option>
-        <option>Vegetative</option>
-        <option>Flowering</option>
-        <option>Fruiting</option>
-        <option>Bulbing</option>
-        <option>Harvest</option>
-      </select>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-outline" onclick="closeModal()">Cancel</button>
-    <button class="btn-primary" onclick="addCrop()">Save Crop</button>
-  </div>
-</div>
+  );
+};
 
-<!-- ADD INVENTORY MODAL -->
-<div class="modal" id="modal-addInventory">
-  <div class="modal-header">
-    <h2>Add Inventory Item</h2>
-    <button class="modal-close" onclick="closeModal()">✕</button>
-  </div>
-  <div class="modal-body">
-    <div class="form-row">
-      <div class="form-group">
-        <label>Item Name *</label>
-        <input type="text" class="form-input" id="inv-name" placeholder="e.g. Urea Fertilizer">
-      </div>
-      <div class="form-group">
-        <label>Category *</label>
-        <select class="form-input" id="inv-cat">
-          <option value="fertilizer">Fertilizer</option>
-          <option value="pesticide">Pesticide</option>
-          <option value="seed">Seeds</option>
-          <option value="equipment">Equipment</option>
-          <option value="fuel">Fuel</option>
-        </select>
-      </div>
+const Loading = () => (
+  <div>
+    <SectionHeader title="Loading Details" sub="Track crop loading, vehicles, and deliveries" />
+    <div style={{ display:"flex", gap:14, marginBottom:24, flexWrap:"wrap" }}>
+      <StatCard label="Total Loads" value={loadings.length} icon="🚛" />
+      <StatCard label="Delivered" value={loadings.filter(l=>l.status==="delivered").length} icon="✅" accent={C.success} />
+      <StatCard label="In Transit" value={loadings.filter(l=>l.status==="in-transit").length} icon="🔄" accent={C.warn} />
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Quantity *</label>
-        <input type="number" class="form-input" id="inv-qty" placeholder="100">
-      </div>
-      <div class="form-group">
-        <label>Unit</label>
-        <select class="form-input" id="inv-unit">
-          <option>kg</option>
-          <option>litre</option>
-          <option>bags</option>
-          <option>units</option>
-        </select>
-      </div>
+    <div style={{ background:C.card, borderRadius:14, border:`1px solid ${C.border}`, overflow:"hidden" }}>
+      <Table
+        cols={["Date","Crop","Quantity","Zone","Driver","Vehicle","Destination","Status"]}
+        rows={loadings.map(l=>[
+          l.date,
+          <span style={{ fontWeight:600 }}>🌿 {l.crop}</span>,
+          l.qty, l.zone,
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <Avatar initials={l.driver.split(" ").map(w=>w[0]).join("")} size={26} />
+            {l.driver}
+          </div>,
+          <span style={{ fontFamily:"monospace", fontSize:12, background:C.bg,
+            padding:"3px 8px", borderRadius:6 }}>{l.vehicle}</span>,
+          l.destination,
+          <Badge>{l.status}</Badge>
+        ])}
+      />
     </div>
-    <div class="form-group">
-      <label>Reorder Level</label>
-      <input type="number" class="form-input" id="inv-reorder" placeholder="Minimum stock before alert">
+    {/* Timeline */}
+    <div style={{ background:C.card, borderRadius:14, padding:20, border:`1px solid ${C.border}`, marginTop:20 }}>
+      <div style={{ fontWeight:700, fontSize:15, marginBottom:16, color:C.text }}>Delivery Timeline</div>
+      {loadings.map(l => (
+        <div key={l.id} style={{ display:"flex", gap:14, marginBottom:16, alignItems:"flex-start" }}>
+          <div style={{ width:10, height:10, borderRadius:"50%", marginTop:5, flexShrink:0,
+            background: l.status==="delivered" ? C.success : C.warn }} />
+          <div style={{ flex:1, borderBottom:`1px solid ${C.border}`, paddingBottom:12 }}>
+            <div style={{ fontWeight:600, color:C.text }}>{l.crop} → {l.destination}</div>
+            <div style={{ fontSize:12, color:C.muted }}>{l.qty} · {l.vehicle} · {l.driver} · {l.date}</div>
+          </div>
+          <Badge>{l.status}</Badge>
+        </div>
+      ))}
     </div>
   </div>
-  <div class="modal-footer">
-    <button class="btn-outline" onclick="closeModal()">Cancel</button>
-    <button class="btn-primary" onclick="addInventoryItem()">Save Item</button>
-  </div>
-</div>
+);
 
-<!-- ADD TASK MODAL -->
-<div class="modal" id="modal-addTask">
-  <div class="modal-header">
-    <h2>Add Task</h2>
-    <button class="modal-close" onclick="closeModal()">✕</button>
-  </div>
-  <div class="modal-body">
-    <div class="form-group">
-      <label>Task Title *</label>
-      <input type="text" class="form-input" id="t-title" placeholder="What needs to be done?">
+const Vendors = () => (
+  <div>
+    <SectionHeader title="Vendor Management" sub="Manage suppliers and track outstanding balances" />
+    <div style={{ display:"flex", gap:14, marginBottom:24, flexWrap:"wrap" }}>
+      <StatCard label="Total Vendors" value={vendors.length} icon="🤝" />
+      <StatCard label="Active" value={vendors.filter(v=>v.status==="active").length} icon="✅" accent={C.success} />
+      <StatCard label="Outstanding" value={`₹${vendors.reduce((a,v)=>a+v.balance,0).toLocaleString()}`} icon="💳" accent={C.danger} />
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Priority</label>
-        <select class="form-input" id="t-priority">
-          <option value="high">High</option>
-          <option value="medium" selected>Medium</option>
-          <option value="low">Low</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Due Date</label>
-        <input type="date" class="form-input" id="t-due">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Category</label>
-      <select class="form-input" id="t-cat">
-        <option>Irrigation</option>
-        <option>Fertilization</option>
-        <option>Pest Control</option>
-        <option>Harvest</option>
-        <option>Sales</option>
-        <option>Maintenance</option>
-        <option>Other</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Notes</label>
-      <textarea class="form-input" id="t-notes" rows="2" placeholder="Additional details..."></textarea>
+    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:16 }}>
+      {vendors.map(v => (
+        <div key={v.id} style={{ background:C.card, borderRadius:14, padding:20,
+          border:`1px solid ${v.status==="active"?C.border:C.dangerSoft}` }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
+            <div style={{ width:44, height:44, borderRadius:12, background:C.accentSoft,
+              display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🏪</div>
+            <Badge color={v.status}>{v.status}</Badge>
+          </div>
+          <div style={{ fontWeight:800, fontSize:15, color:C.text, marginBottom:4 }}>{v.name}</div>
+          <div style={{ fontSize:12, color:C.muted, marginBottom:12 }}>{v.category}</div>
+          <div style={{ display:"grid", gap:8 }}>
+            {[
+              ["📞","Contact", v.contact],
+              ["📍","Location", v.location],
+              ["📅","Last Order", v.lastOrder],
+              ["💳","Balance", v.balance > 0 ? <span style={{ color:C.danger, fontWeight:700 }}>₹{v.balance.toLocaleString()}</span> : <span style={{ color:C.success, fontWeight:700 }}>Cleared</span>],
+            ].map(([ic,lb,vl])=>(
+              <div key={lb} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12 }}>
+                <span>{ic}</span>
+                <span style={{ color:C.muted, minWidth:72 }}>{lb}</span>
+                <span style={{ fontWeight:600, color:C.text }}>{vl}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   </div>
-  <div class="modal-footer">
-    <button class="btn-outline" onclick="closeModal()">Cancel</button>
-    <button class="btn-primary" onclick="addTask()">Add Task</button>
-  </div>
-</div>
+);
 
-<!-- ADD TRANSACTION MODAL -->
-<div class="modal" id="modal-addTransaction">
-  <div class="modal-header">
-    <h2>Add Transaction</h2>
-    <button class="modal-close" onclick="closeModal()">✕</button>
-  </div>
-  <div class="modal-body">
-    <div class="form-row">
-      <div class="form-group">
-        <label>Type *</label>
-        <select class="form-input" id="tr-type">
-          <option value="income">Income</option>
-          <option value="expense">Expense</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Amount (₹) *</label>
-        <input type="number" class="form-input" id="tr-amount" placeholder="0">
+// ── Login ────────────────────────────────────────────────────────────────────
+const Login = ({ onLogin }) => {
+  const [u, setU] = useState("");
+  const [p, setP] = useState("");
+  const [err, setErr] = useState("");
+  const submit = () => {
+    if (u==="admin" && p==="farm2025") onLogin();
+    else setErr("Invalid credentials. Use admin / farm2025");
+  };
+  return (
+    <div style={{ minHeight:"100vh", background:`linear-gradient(135deg,${C.primary} 0%,#4A7C28 100%)`,
+      display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ background:C.card, borderRadius:20, padding:48, width:360,
+        boxShadow:"0 24px 60px rgba(0,0,0,.25)" }}>
+        <div style={{ textAlign:"center", marginBottom:32 }}>
+          <div style={{ fontSize:52, marginBottom:8 }}>🌿</div>
+          <div style={{ fontSize:24, fontWeight:800, color:C.primary }}>Farm CRM</div>
+          <div style={{ fontSize:13, color:C.muted, marginTop:4 }}>Admin Login</div>
+        </div>
+        {err && <div style={{ background:C.dangerSoft, color:C.danger, fontSize:12,
+          padding:"10px 14px", borderRadius:8, marginBottom:16, fontWeight:500 }}>{err}</div>}
+        {[["Username","text",u,setU],["Password","password",p,setP]].map(([lb,tp,vl,fn])=>(
+          <div key={lb} style={{ marginBottom:14 }}>
+            <label style={{ fontSize:13, fontWeight:600, color:C.text, display:"block", marginBottom:6 }}>{lb}</label>
+            <input type={tp} value={vl} onChange={e=>fn(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&submit()}
+              placeholder={tp==="text"?"admin":"••••••••"}
+              style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:`1.5px solid ${C.border}`,
+                fontSize:14, outline:"none", boxSizing:"border-box",
+                background:C.bg, color:C.text }} />
+          </div>
+        ))}
+        <button onClick={submit}
+          style={{ width:"100%", padding:"13px", borderRadius:10, border:"none",
+            background:C.primary, color:"#fff", fontWeight:700, fontSize:15,
+            cursor:"pointer", marginTop:8, letterSpacing:.3 }}>
+          Sign In
+        </button>
+        <div style={{ textAlign:"center", marginTop:16, fontSize:12, color:C.muted }}>
+          Demo: <strong>admin</strong> / <strong>farm2025</strong>
+        </div>
       </div>
     </div>
-    <div class="form-group">
-      <label>Description *</label>
-      <input type="text" class="form-input" id="tr-desc" placeholder="e.g. Sold 200kg Tomato to Ravi Traders">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Category</label>
-        <select class="form-input" id="tr-cat">
-          <option>Crop Sale</option>
-          <option>Government Scheme</option>
-          <option>Seeds Purchase</option>
-          <option>Fertilizer</option>
-          <option>Labour Wages</option>
-          <option>Equipment</option>
-          <option>Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Date</label>
-        <input type="date" class="form-input" id="tr-date">
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-outline" onclick="closeModal()">Cancel</button>
-    <button class="btn-primary" onclick="addTransaction()">Save Transaction</button>
-  </div>
-</div>
+  );
+};
 
-<!-- QUICK ADD MODAL -->
-<div class="modal" id="modal-quickAdd">
-  <div class="modal-header">
-    <h2>Quick Add</h2>
-    <button class="modal-close" onclick="closeModal()">✕</button>
-  </div>
-  <div class="modal-body">
-    <div class="quick-add-grid">
-      <button class="quick-add-btn" onclick="closeModal();showModal('addContact')">
-        <span>👥</span> Contact
-      </button>
-      <button class="quick-add-btn" onclick="closeModal();showModal('addCrop')">
-        <span>🌱</span> Crop
-      </button>
-      <button class="quick-add-btn" onclick="closeModal();showModal('addTask')">
-        <span>✓</span> Task
-      </button>
-      <button class="quick-add-btn" onclick="closeModal();showModal('addInventory')">
-        <span>📦</span> Inventory
-      </button>
-      <button class="quick-add-btn" onclick="closeModal();showModal('addTransaction')">
-        <span>₹</span> Transaction
-      </button>
+// ── App ──────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [active, setActive] = useState("dashboard");
+  const [collapsed, setCollapsed] = useState(false);
+
+  if (!loggedIn) return <Login onLogin={()=>setLoggedIn(true)} />;
+
+  const pages = {
+    dashboard: <Dashboard />,
+    zones:     <Zones />,
+    employees: <Employees />,
+    tasks:     <Tasks />,
+    attendance:<Attendance />,
+    expenses:  <Expenses />,
+    loading:   <Loading />,
+    vendors:   <Vendors />,
+  };
+
+  return (
+    <div style={{ display:"flex", minHeight:"100vh", background:C.bg, fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
+      <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
+      <main style={{ flex:1, padding:"32px 28px", overflowY:"auto", maxWidth:"100%" }}>
+        {pages[active]}
+      </main>
     </div>
-  </div>
-</div>
-
-<!-- TOAST NOTIFICATION -->
-<div class="toast" id="toast"></div>
-
-<script src="app.js"></script>
-</body>
-</html>
+  );
+}
